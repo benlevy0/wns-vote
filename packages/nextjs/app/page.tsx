@@ -15,7 +15,6 @@ import { abi as registryAbi } from "~~/components/abis/ENSWorldIdRegistry.json";
 import { abi as governorAbi } from "~~/components/abis/Governor.json";
 import { Address } from "~~/components/scaffold-eth";
 import { useAccountBalance } from "~~/hooks/scaffold-eth/";
-import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 
 interface Proposal {
   id: number;
@@ -38,6 +37,8 @@ const Home: NextPage = () => {
   const [liveVotes, setLiveVotes] = useState<Proposal[]>([{ id: 1, description: "Test first proposal" }]);
   const { balance, price, isError, isLoading } = useAccountBalance(connectedAddress);
   const [eyeballScanned, setEyeballScanned] = useState(false);
+  const client = usePublicClient();
+  const GOVERNOR_ADDRESS = "0x2E49E6A076b2AB878c60f60CEd84355fa1A445F1";
 
   useContractRead({
     address: "0xff734cA42678496A63829c4fdc1F5E5fa0fF7cEA",
@@ -63,15 +64,21 @@ const Home: NextPage = () => {
   }, [setEnsName, fetchedEns]);
 
   async function getProposalEvents() {
-    console.log("getting proposal events");
+    return await client.getContractEvents({
+      address: GOVERNOR_ADDRESS,
+      abi: governorAbi,
+      eventName: "ProposalCreated",
+      fromBlock: 5500322n,
+      toBlock: "latest",
+    });
   }
 
   const onSuccess = (result: ISuccessResult) => {
     console.log(result);
     const { merkle_root, nullifier_hash, proof } = result;
     const ensHash = namehash(ensName);
-    //const decodedVal = decodeAbiParameters([{ name: "proof", type: "uint256[8]" }], proof as any);
-    //registerEns({ args: [ensHash, merkle_root, nullifier_hash, decodedVal[0]] });
+    const decodedVal = decodeAbiParameters([{ name: "proof", type: "uint256[8]" }], proof as any);
+    registerEns({ args: [ensHash, merkle_root, nullifier_hash, decodedVal[0]] });
   };
 
   const onVotePress = () => {
