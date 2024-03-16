@@ -38,10 +38,12 @@ const Home: NextPage = () => {
   const { balance, price, isError, isLoading } = useAccountBalance(connectedAddress);
   const [eyeballScanned, setEyeballScanned] = useState(false);
   const client = usePublicClient();
-  const GOVERNOR_ADDRESS = "0x2E49E6A076b2AB878c60f60CEd84355fa1A445F1";
+  const GOVERNOR_ADDRESS = "0x3b3bdd0646809360434963e1afa2ecbf14e8aaad";
+  const REGISTRY_ADDRESS = "0xff734ca42678496a63829c4fdc1f5e5fa0ff7cea";
+  const TOKEN_ADDRESS = "0xbb8f6b8df8cca184d54e58019cd8b71bdc26360e";
 
   useContractRead({
-    address: "0xff734cA42678496A63829c4fdc1F5E5fa0fF7cEA",
+    address: REGISTRY_ADDRESS,
     abi: registryAbi,
     functionName: "validatedEnsNodes",
     args: [namehash(ensName)],
@@ -51,7 +53,7 @@ const Home: NextPage = () => {
   });
 
   const { writeAsync: registerEns } = useContractWrite({
-    address: "0xff734cA42678496A63829c4fdc1F5E5fa0fF7cEA",
+    address: REGISTRY_ADDRESS,
     abi: registryAbi,
     functionName: "registerEns",
     value: 0n,
