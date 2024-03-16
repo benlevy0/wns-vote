@@ -6,10 +6,13 @@ import type { NextPage } from "next";
 import { AwesomeButton } from "react-awesome-button";
 import "react-awesome-button/dist/styles.css";
 import ReactModal from "react-modal";
-import { getAddress, isAddress, parseAbiItem } from "viem";
+import { decodeAbiParameters, getAddress, isAddress, parseAbiItem } from "viem";
 import { namehash } from "viem/ens";
 import { useAccount, useEnsName, usePublicClient } from "wagmi";
 import { useContractRead, useContractWrite } from "wagmi";
+import { sepolia } from "wagmi/chains";
+import { abi as registryAbi } from "~~/components/abis/ENSWorldIdRegistry.json";
+import { abi as governorAbi } from "~~/components/abis/Governor.json";
 import { Address } from "~~/components/scaffold-eth";
 import { useAccountBalance } from "~~/hooks/scaffold-eth/";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
@@ -28,7 +31,7 @@ const Home: NextPage = () => {
   const { data: fetchedEns } = useEnsName({
     address: checkSumAddress,
     enabled: isAddress(checkSumAddress ?? ""),
-    chainId: 1,
+    chainId: sepolia.id,
   });
   const [isVotingModalOpen, setVotingModalOpen] = useState(false);
   const [liveVotes, setLiveVotes] = useState<Proposal[]>([{ id: 1, description: "Test first proposal" }]);
@@ -74,20 +77,19 @@ const Home: NextPage = () => {
     });
   }
 
+  const { writeAsync: registerEns } = useContractWrite({
+    address: "0x2021234d88565586C99FEed3ddaCB4A72E32b66f",
+    abi: registryAbi,
+    functionName: "registerEns",
+    value: 0n,
+  });
+
   const onSuccess = (result: ISuccessResult) => {
-    const { merkle_root, nullifier_hash, proof, verification_level: _verification_level } = result;
+    console.log(result);
+    const { merkle_root, nullifier_hash, proof } = result;
     const ensHash = namehash(ensName);
-    const sendProofFunctionABI = wagmigotchiABI;
-    useContractWrite({
-      address: "blah",
-      abi: sendProofFunctionABI,
-      functionName: "registerEns",
-      onSuccess() {
-        console.log("Successfully registered ENS");
-        setEyeballScanned(true);
-      },
-      args: [ensHash, merkle_root, nullifier_hash, proof],
-    });
+    const decodedVal = decodeAbiParameters([{ name: "proof", type: "uint256[8]" }], proof as any);
+    registerEns({ args: [ensHash, merkle_root, nullifier_hash, decodedVal[0]] });
   };
 
   const onVotePress = () => {
@@ -134,8 +136,8 @@ const Home: NextPage = () => {
         <div className="flex justify-center items-center space-x-2">
           {eyeballScanned || (
             <IDKitWidget
-              app_id="app_6c5c6f2e795e36fe2ca4bc71bae94026"
-              action="link-with-ens"
+              app_id="app_staging_1b0aee8169e8e96effda6718b3d14c65"
+              action="register-ens"
               // On-chain only accepts Orb verifications
               verification_level={VerificationLevel.Orb}
               onSuccess={onSuccess}
