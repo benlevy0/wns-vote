@@ -27,6 +27,7 @@ const Home: NextPage = () => {
   const [ensRegistry, setEnsRegistry] = useState<string[]>(["one.eth", "two.eth", "three.eth", "four.eth", "five.eth"]);
   const { address: connectedAddress } = useAccount();
   const [ensName, setEnsName] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
   const checkSumAddress = connectedAddress ? getAddress(connectedAddress) : undefined;
   const { data: fetchedEns } = useEnsName({
     address: checkSumAddress,
@@ -38,58 +39,39 @@ const Home: NextPage = () => {
   const { balance, price, isError, isLoading } = useAccountBalance(connectedAddress);
   const [eyeballScanned, setEyeballScanned] = useState(false);
 
+  useContractRead({
+    address: "0xff734cA42678496A63829c4fdc1F5E5fa0fF7cEA",
+    abi: registryAbi,
+    functionName: "validatedEnsNodes",
+    args: [namehash(ensName)],
+    onSuccess(data) {
+      setIsVerified(data);
+    },
+  });
+
+  const { writeAsync: registerEns } = useContractWrite({
+    address: "0xff734cA42678496A63829c4fdc1F5E5fa0fF7cEA",
+    abi: registryAbi,
+    functionName: "registerEns",
+    value: 0n,
+  });
+
   useEffect(() => {
     if (fetchedEns) {
       setEnsName(fetchedEns);
     }
   }, [setEnsName, fetchedEns]);
 
-  useEffect(() => {
-    getEnsRegistry();
-  }, []);
-
   async function getProposalEvents() {
-    const { targetNetwork } = useTargetNetwork();
-    const publicClient = usePublicClient({
-      chainId: targetNetwork.id,
-    });
-    const logs = await publicClient.getLogs({
-      address: "blah",
-      event: parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)"),
-    });
-    const parsedLogs: Proposal[] = JSON.parse(logs);
-    setLiveVotes(parsedLogs);
+    console.log("getting proposal events");
   }
-
-  async function getEnsRegistry() {
-    const contractName = "";
-
-    const validatedEnsNodesFunctionABI = wagmigotchiABI;
-    useContractRead({
-      address: "blah",
-      abi: validatedEnsNodesFunctionABI,
-      functionName: "validatedEnsNodes",
-      onSuccess(data) {
-        console.log("Successfully fetched ENS registry");
-        console.log(data);
-        setEnsRegistry(data);
-      },
-    });
-  }
-
-  const { writeAsync: registerEns } = useContractWrite({
-    address: "0x2021234d88565586C99FEed3ddaCB4A72E32b66f",
-    abi: registryAbi,
-    functionName: "registerEns",
-    value: 0n,
-  });
 
   const onSuccess = (result: ISuccessResult) => {
     console.log(result);
     const { merkle_root, nullifier_hash, proof } = result;
     const ensHash = namehash(ensName);
-    const decodedVal = decodeAbiParameters([{ name: "proof", type: "uint256[8]" }], proof as any);
-    registerEns({ args: [ensHash, merkle_root, nullifier_hash, decodedVal[0]] });
+    //const decodedVal = decodeAbiParameters([{ name: "proof", type: "uint256[8]" }], proof as any);
+    //registerEns({ args: [ensHash, merkle_root, nullifier_hash, decodedVal[0]] });
   };
 
   const onVotePress = () => {
@@ -134,7 +116,7 @@ const Home: NextPage = () => {
         </div>
 
         <div className="flex justify-center items-center space-x-2">
-          {eyeballScanned || (
+          {eyeballScanned || isVerified || (
             <IDKitWidget
               app_id="app_staging_1b0aee8169e8e96effda6718b3d14c65"
               action="register-ens"
