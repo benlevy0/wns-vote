@@ -20,6 +20,8 @@ import { useAccountBalance } from "~~/hooks/scaffold-eth/";
 
 // @ts-nocheck
 
+// @ts-nocheck
+
 interface Proposal {
   id: number;
   description: string;
@@ -71,7 +73,7 @@ const Home: NextPage = () => {
   const [liveVotes, setLiveVotes] = useState<Proposal[]>([]);
   const { balance } = useAccountBalance(connectedAddress);
   const client = usePublicClient();
-  const GOVERNOR_ADDRESS = "0xFA763FF84D93263F7A71d0F54282D12cFF8d5295";
+  const GOVERNOR_ADDRESS = "0x40E7aFaaCCC1C24CB197C93dbE24094d6822E41e";
   const REGISTRY_ADDRESS = "0x2e7e59FCF7287b669A06B8F9eE7eec30BeD8feA3";
   const TOKEN_ADDRESS = "0xbb8f6b8df8cca184d54e58019cd8b71bdc26360e";
 
