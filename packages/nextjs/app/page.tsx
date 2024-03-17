@@ -49,6 +49,8 @@ const weiToEtherBigInt = weiBigInt => {
 };
 
 const Home: NextPage = () => {
+  const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const [isDarkMode, setIsDarkMode] = useState(darkModeQuery.matches);
   const showRegistry = true;
   const [isRegistryModalOpen, setRegistryModalOpen] = useState(false);
   const [ensRegistry, setEnsRegistry] = useState<string[]>([]);
@@ -69,6 +71,17 @@ const Home: NextPage = () => {
   const GOVERNOR_ADDRESS = "0xFA763FF84D93263F7A71d0F54282D12cFF8d5295";
   const REGISTRY_ADDRESS = "0x2e7e59FCF7287b669A06B8F9eE7eec30BeD8feA3";
   const TOKEN_ADDRESS = "0xbb8f6b8df8cca184d54e58019cd8b71bdc26360e";
+
+  useEffect(() => {
+    if (window) {
+      const darkModeQuery = window?.matchMedia("(prefers-color-scheme: dark)");
+      setIsDarkMode(darkModeQuery.matches);
+
+      const handler = e => setIsDarkMode(e.matches);
+      darkModeQuery.addListener(handler);
+      return () => darkModeQuery.removeListener(handler);
+    }
+  }, []);
 
   useContractRead({
     address: REGISTRY_ADDRESS,
@@ -209,7 +222,17 @@ const Home: NextPage = () => {
   };
 
   return (
-    <div className="flex items-center flex-col flex-grow pt-10">
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        flexDirection: "column",
+        flexGrow: "1",
+        paddingTop: "10px",
+        backgroundColor: isDarkMode ? "#282c34" : "#FFF",
+        color: isDarkMode ? "#FFF" : "#000",
+      }}
+    >
       <div className="px-5">
         <div className="flex justify-center items-center space-x-2">
           <p className="my-2 font-medium">{ensName ? "ENS Name:" : "Connected Address:"}</p>
@@ -269,12 +292,13 @@ const Home: NextPage = () => {
               transform: "translate(-50%, -50%)",
               width: "80%",
               maxWidth: "500px",
-              backgroundColor: "white",
+              backgroundColor: isDarkMode ? "#2c2f33" : "white", // Dark mode support
               padding: "20px",
               border: "1px solid #ccc",
               borderRadius: "10px",
               boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
               outline: "none",
+              color: isDarkMode ? "white" : "black", // Text color for dark mode
             },
             overlay: {
               position: "fixed",
@@ -288,13 +312,14 @@ const Home: NextPage = () => {
           }}
           ariaHideApp={false}
         >
-          <div className="modal-content" style={{ position: "relative" }}>
+          <div className="modal-content" style={{ position: "relative", color: isDarkMode ? "white" : "black" }}>
             <h2
               style={{
                 textAlign: "center",
                 marginBottom: "20px",
                 fontSize: "24px",
                 fontWeight: "bold",
+                color: isDarkMode ? "white" : "black",
               }}
             >
               Registered ENS Names
@@ -345,13 +370,13 @@ const Home: NextPage = () => {
               transform: "translate(-50%, -50%)",
               width: "calc(100% - 40px)",
               maxWidth: "600px",
-              backgroundColor: "white",
+              backgroundColor: isDarkMode ? "#2c2f33" : "white", // Dark mode support
               padding: "40px",
               border: "1px solid #ccc",
               borderRadius: "10px",
               boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
               outline: "none",
-              overflow: "auto",
+              color: isDarkMode ? "white" : "black", // Text color for dark mode
             },
             overlay: {
               position: "fixed",
@@ -401,35 +426,43 @@ const Home: NextPage = () => {
                     }}
                   >
                     <span style={{ marginRight: "auto" }}>{voteItem.description}</span>
-                    <button
-                      onClick={() => castVote(voteItem.id, balance, true)} // Passing true for voting for the proposal
-                      style={{
-                        marginRight: "10px",
-                        padding: "10px 20px",
-                        border: "1px solid #28a745",
-                        background: "#28a745",
-                        color: "white",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                        fontSize: "16px",
-                      }}
-                    >
-                      For
-                    </button>
-                    <button
-                      onClick={() => castVote(voteItem.id, balance, false)} // Passing false for voting against the proposal
-                      style={{
-                        padding: "10px 20px",
-                        border: "1px solid #dc3545",
-                        background: "#dc3545",
-                        color: "white",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                        fontSize: "16px",
-                      }}
-                    >
-                      Against
-                    </button>
+                    {voteItem.voted !== null ? (
+                      <span style={{ color: voteItem.voted ? "green" : "red" }}>
+                        You have already voted {voteItem.voted ? "For" : "Against"}
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => castVote(voteItem.id, balance, true)} // Passing true for voting for the proposal
+                          style={{
+                            marginRight: "10px",
+                            padding: "10px 20px",
+                            border: "1px solid #28a745",
+                            background: "#28a745",
+                            color: "white",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "16px",
+                          }}
+                        >
+                          For
+                        </button>
+                        <button
+                          onClick={() => castVote(voteItem.id, balance, false)} // Passing false for voting against the proposal
+                          style={{
+                            padding: "10px 20px",
+                            border: "1px solid #dc3545",
+                            background: "#dc3545",
+                            color: "white",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "16px",
+                          }}
+                        >
+                          Against
+                        </button>
+                      </>
+                    )}
                   </div>
                 </li>
               ))}
