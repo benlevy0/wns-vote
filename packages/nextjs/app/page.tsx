@@ -44,14 +44,14 @@ function sqrtBigInt(value) {
 }
 
 const weiToEtherBigInt = weiBigInt => {
-  const WEI_PER_ETHER = BigInt("100000000000000000");
+  const WEI_PER_ETHER = BigInt(10 ** 18);
   return weiBigInt / WEI_PER_ETHER;
 };
 
 const Home: NextPage = () => {
-  const showRegistry = false;
+  const showRegistry = true;
   const [isRegistryModalOpen, setRegistryModalOpen] = useState(false);
-  const [ensRegistry, setEnsRegistry] = useState<string[]>(["one.eth", "two.eth", "three.eth", "four.eth", "five.eth"]);
+  const [ensRegistry, setEnsRegistry] = useState<string[]>([]);
   const { address: connectedAddress } = useAccount();
   const [ensName, setEnsName] = useState("");
   const [isVerified, setIsVerified] = useState(false);
@@ -66,8 +66,8 @@ const Home: NextPage = () => {
   const [liveVotes, setLiveVotes] = useState<Proposal[]>([]);
   const { balance, price, isError, isLoading } = useAccountBalance(connectedAddress);
   const client = usePublicClient();
-  const GOVERNOR_ADDRESS = "0x3b3bdd0646809360434963e1afa2ecbf14e8aaad";
-  const REGISTRY_ADDRESS = "0xff734ca42678496a63829c4fdc1f5e5fa0ff7cea";
+  const GOVERNOR_ADDRESS = "0xFA763FF84D93263F7A71d0F54282D12cFF8d5295";
+  const REGISTRY_ADDRESS = "0x2e7e59FCF7287b669A06B8F9eE7eec30BeD8feA3";
   const TOKEN_ADDRESS = "0xbb8f6b8df8cca184d54e58019cd8b71bdc26360e";
 
   useContractRead({
@@ -121,6 +121,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     getProposalEvents();
+    getRegisteredNames();
   }, []);
 
   async function getProposalEvents() {
@@ -149,12 +150,35 @@ const Home: NextPage = () => {
     return events;
   }
 
+  async function getRegisteredNames() {
+    const events = await client.getContractEvents({
+      address: REGISTRY_ADDRESS,
+      abi: registryAbi,
+      eventName: "EnsNodeRegistered",
+      fromBlock: 5500322n,
+      toBlock: "latest",
+    });
+
+    const newNames = events.map(event => event.args.ensName);
+    const uniqueNames = Array.from(new Set(newNames));
+
+    setEnsRegistry(prevEnsRegistry => {
+      const registrySet = new Set(prevEnsRegistry);
+      uniqueNames.forEach(name => {
+        registrySet.add(name);
+      });
+      return Array.from(registrySet);
+    });
+
+    console.log(events);
+    return events;
+  }
+
   const onSuccess = (result: ISuccessResult) => {
     console.log(result);
     const { merkle_root, nullifier_hash, proof } = result;
-    const ensHash = namehash(ensName);
     const decodedVal = decodeAbiParameters([{ name: "proof", type: "uint256[8]" }], proof as any);
-    registerEns({ args: [ensHash, merkle_root, nullifier_hash, decodedVal[0]] });
+    registerEns({ args: [ensName, merkle_root, nullifier_hash, decodedVal[0]] });
   };
 
   const onVotePress = () => {
@@ -192,7 +216,7 @@ const Home: NextPage = () => {
           {ensName ? <p className="text-blue-500">{ensName}</p> : <Address address={connectedAddress} />}
         </div>
         <div className="flex justify-center items-center space-x-2">
-          <p className="my-2 font-medium">Voting Power:</p>
+          <p className="my-2 font-medium">Voting Power (Quadratic):</p>
           <p className="text-blue-500">{String(weiToEtherBigInt(votingPower))}</p>
         </div>
 
@@ -265,8 +289,16 @@ const Home: NextPage = () => {
           ariaHideApp={false}
         >
           <div className="modal-content" style={{ position: "relative" }}>
-            {" "}
-            <h2>Registered ENS Names</h2>
+            <h2
+              style={{
+                textAlign: "center",
+                marginBottom: "20px",
+                fontSize: "24px",
+                fontWeight: "bold",
+              }}
+            >
+              Registered ENS Names
+            </h2>
             <ul>
               {ensRegistry.map((ensName, index) => (
                 <li key={index}>{ensName}</li>
