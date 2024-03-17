@@ -12,11 +12,23 @@ import { namehash } from "viem/ens";
 import { useAccount, useEnsName, usePublicClient } from "wagmi";
 import { useContractRead, useContractWrite } from "wagmi";
 import { sepolia } from "wagmi/chains";
-import { abi as registryAbi } from "~~/components/abis/ENSWorldIdRegistry.json";
-import { abi as tokenAbi } from "~~/components/abis/GovernanceToken.json";
-import { abi as governorAbi } from "~~/components/abis/Governor.json";
+import registryAbi from "~~/components/abis/ENSWorldIdRegistry.json";
+import tokenAbi from "~~/components/abis/GovernanceToken.json";
+import governorAbi from "~~/components/abis/Governor.json";
 import { Address } from "~~/components/scaffold-eth";
 import { useAccountBalance } from "~~/hooks/scaffold-eth/";
+
+// @ts-nocheck
+
+// @ts-nocheck
+
+// @ts-nocheck
+
+// @ts-nocheck
+
+// @ts-nocheck
+
+// @ts-nocheck
 
 // @ts-nocheck
 
@@ -54,8 +66,8 @@ const weiToEtherBigInt = weiBigInt => {
 };
 
 const Home: NextPage = () => {
-  const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  const [isDarkMode, setIsDarkMode] = useState(darkModeQuery.matches);
+  //const [isDarkMode, _setIsDarkMode] = useState(false);
+  const isDarkMode = false;
   const showRegistry = true;
   const [isRegistryModalOpen, setRegistryModalOpen] = useState(false);
   const [ensRegistry, setEnsRegistry] = useState<string[]>([]);
@@ -77,20 +89,9 @@ const Home: NextPage = () => {
   const REGISTRY_ADDRESS = "0x2e7e59FCF7287b669A06B8F9eE7eec30BeD8feA3";
   const TOKEN_ADDRESS = "0xbb8f6b8df8cca184d54e58019cd8b71bdc26360e";
 
-  useEffect(() => {
-    if (window) {
-      const darkModeQuery = window?.matchMedia("(prefers-color-scheme: dark)");
-      setIsDarkMode(darkModeQuery.matches);
-
-      const handler = e => setIsDarkMode(e.matches);
-      darkModeQuery.addListener(handler);
-      return () => darkModeQuery.removeListener(handler);
-    }
-  }, []);
-
   useContractRead({
     address: REGISTRY_ADDRESS,
-    abi: registryAbi,
+    abi: registryAbi.abi,
     functionName: "validatedEnsNodes",
     args: [namehash(ensName)],
     onSuccess(data) {
@@ -100,7 +101,7 @@ const Home: NextPage = () => {
 
   useContractRead({
     address: TOKEN_ADDRESS,
-    abi: tokenAbi,
+    abi: tokenAbi.abi,
     functionName: "getCurrentVotes",
     args: [connectedAddress],
     onSuccess(data) {
@@ -111,7 +112,7 @@ const Home: NextPage = () => {
 
   const { writeAsync: registerEns } = useContractWrite({
     address: REGISTRY_ADDRESS,
-    abi: registryAbi,
+    abi: registryAbi.abi,
     functionName: "registerEns",
     value: 0n,
     onSuccess(data) {
@@ -122,7 +123,7 @@ const Home: NextPage = () => {
 
   const { writeAsync: castVoteContract } = useContractWrite({
     address: GOVERNOR_ADDRESS,
-    abi: governorAbi,
+    abi: governorAbi.abi,
     functionName: "castVote",
     onSuccess() {
       console.log("Successfully cast vote");
@@ -145,7 +146,7 @@ const Home: NextPage = () => {
   async function getProposalEvents() {
     const events = await client.getContractEvents({
       address: GOVERNOR_ADDRESS,
-      abi: governorAbi,
+      abi: governorAbi.abi,
       eventName: "ProposalCreated",
       fromBlock: 5500322n,
       toBlock: "latest",
@@ -171,7 +172,7 @@ const Home: NextPage = () => {
   async function getRegisteredNames() {
     const events = await client.getContractEvents({
       address: REGISTRY_ADDRESS,
-      abi: registryAbi,
+      abi: registryAbi.abi,
       eventName: "EnsNodeRegistered",
       fromBlock: 5500322n,
       toBlock: "latest",
