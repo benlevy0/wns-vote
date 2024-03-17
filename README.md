@@ -1,81 +1,34 @@
-# 🏗 Scaffold-ETH 2
+WNS.vote was created during the ETHGlobal London 2024 hackathon. It is a quadratic voting app that uses ENS names for identifiability and World ID for Sybil resistance.
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+# Contracts
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+https://github.com/arr00/wns
 
-⚙️ Built using NextJS, RainbowKit, Hardhat, Wagmi, Viem, and Typescript.
+Sepolia:
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+- ENS Registry: [0x2e7e59FCF7287b669A06B8F9eE7eec30BeD8feA3](https://sepolia.etherscan.io/address/0x2e7e59FCF7287b669A06B8F9eE7eec30BeD8feA3)
+- Governance: [0x40E7aFaaCCC1C24CB197C93dbE24094d6822E41e](https://sepolia.etherscan.io/address/0x40E7aFaaCCC1C24CB197C93dbE24094d6822E41e)
+- Token: [0xbb8f6b8df8cca184d54e58019cd8b71bdc26360e](https://sepolia.etherscan.io/address/0xbb8f6b8df8cca184d54e58019cd8b71bdc26360e)
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+# Overview
 
-## Requirements
+Quadratic voting aims to imbue on-chain governance with a slightly populist spirit, giving folks voting weight equivalent to the square root of their holdings.
 
-Before you begin, you need to install the following tools:
+This doesn't work without Sybil resistance, though. You need a way to stop whales from splitting their holdings up into many wallets.
 
-- [Node (>= v18.17)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
+This repo implements quadratic voting with World ID for Sybil resistance and ENS names for identifiability and, in the process, creating the first—to our knowledge—registry of ENS names that are verified to be unique humans.
 
-## Quickstart
+# Presentation
 
-To get started with Scaffold-ETH 2, follow the steps below:
+https://tome.app/wns-vote/quadratic-voting-with-sybil-resistance-cltuda4ak00dqpk63kx3t7ug7
 
-1. Clone this repo & install dependencies
+# Hosted version
 
-```
-git clone https://github.com/scaffold-eth/scaffold-eth-2.git
-cd scaffold-eth-2
+https://wns-app.vercel.app/
+
+# Run locally
+
+```bash
 yarn install
+npm run start
 ```
-
-2. Run a local network in the first terminal:
-
-```
-yarn chain
-```
-
-This command starts a local Ethereum network using Hardhat. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `hardhat.config.ts`.
-
-3. On a second terminal, deploy the test contract:
-
-```
-yarn deploy
-```
-
-This command deploys a test smart contract to the local network. The contract is located in `packages/hardhat/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/hardhat/deploy` to deploy the contract to the network. You can also customize the deploy script.
-
-4. On a third terminal, start your NextJS app:
-
-```
-yarn start
-```
-
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
-
-Run smart contract test with `yarn hardhat:test`
-
-- Edit your smart contract `YourContract.sol` in `packages/hardhat/contracts`
-- Edit your frontend in `packages/nextjs/pages`
-- Edit your deployment scripts in `packages/hardhat/deploy`
-
-## Documentation
-
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
-
-To know more about its features, check out our [website](https://scaffoldeth.io).
-
-## Contributing to Scaffold-ETH 2
-
-We welcome contributions to Scaffold-ETH 2!
-
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
-# wns-vote
