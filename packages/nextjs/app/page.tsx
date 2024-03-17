@@ -19,9 +19,11 @@ import { useAccountBalance } from "~~/hooks/scaffold-eth/";
 interface Proposal {
   id: number;
   description: string;
+  voted: null | boolean;
 }
 
 const Home: NextPage = () => {
+  const showRegistry = false;
   const [isRegistryModalOpen, setRegistryModalOpen] = useState(false);
   const [ensRegistry, setEnsRegistry] = useState<string[]>(["one.eth", "two.eth", "three.eth", "four.eth", "five.eth"]);
   const { address: connectedAddress } = useAccount();
@@ -34,9 +36,8 @@ const Home: NextPage = () => {
     chainId: sepolia.id,
   });
   const [isVotingModalOpen, setVotingModalOpen] = useState(false);
-  const [liveVotes, setLiveVotes] = useState<Proposal[]>([{ id: 1, description: "Test first proposal" }]);
+  const [liveVotes, setLiveVotes] = useState<Proposal[]>([]);
   const { balance, price, isError, isLoading } = useAccountBalance(connectedAddress);
-  const [eyeballScanned, setEyeballScanned] = useState(false);
   const client = usePublicClient();
   const GOVERNOR_ADDRESS = "0x3b3bdd0646809360434963e1afa2ecbf14e8aaad";
   const REGISTRY_ADDRESS = "0xff734ca42678496a63829c4fdc1f5e5fa0ff7cea";
@@ -48,7 +49,7 @@ const Home: NextPage = () => {
     functionName: "validatedEnsNodes",
     args: [namehash(ensName)],
     onSuccess(data) {
-      setIsVerified(data);
+      setIsVerified(Boolean(data));
     },
   });
 
@@ -57,22 +58,57 @@ const Home: NextPage = () => {
     abi: registryAbi,
     functionName: "registerEns",
     value: 0n,
+    onSuccess(data) {
+      console.log(data);
+      setIsVerified(true);
+    },
+  });
+
+  const { writeAsync: castVoteContract } = useContractWrite({
+    address: GOVERNOR_ADDRESS,
+    abi: governorAbi,
+    functionName: "castVote",
+    onSuccess() {
+      console.log("Successfully cast vote");
+      setVotingModalOpen(false);
+    },
   });
 
   useEffect(() => {
     if (fetchedEns) {
+      console.log(fetchedEns);
       setEnsName(fetchedEns);
     }
   }, [setEnsName, fetchedEns]);
 
+  useEffect(() => {
+    getProposalEvents();
+  }, []);
+
   async function getProposalEvents() {
-    return await client.getContractEvents({
+    const events = await client.getContractEvents({
       address: GOVERNOR_ADDRESS,
       abi: governorAbi,
       eventName: "ProposalCreated",
       fromBlock: 5500322n,
       toBlock: "latest",
     });
+
+    const existingProposalIds = new Set(liveVotes.map(proposal => proposal.id));
+
+    const newProposals = events
+      .filter(event => !existingProposalIds.has(event.args.id))
+      .map(event => ({ id: event.args.id, description: event.args.description, voted: null }));
+
+    if (newProposals.length > 0) {
+      setLiveVotes(prevLiveVotes => [
+        ...prevLiveVotes,
+        ...newProposals.filter(proposal => !prevLiveVotes.some(p => p.id === proposal.id)),
+      ]);
+    }
+
+    console.log(events);
+    return events;
   }
 
   const onSuccess = (result: ISuccessResult) => {
@@ -94,7 +130,6 @@ const Home: NextPage = () => {
 
   const openRegistry = async () => {
     console.log("View Registry Pressed");
-    // setEnsRegistry();
     setRegistryModalOpen(true);
   };
 
@@ -102,30 +137,25 @@ const Home: NextPage = () => {
     setRegistryModalOpen(false);
   };
 
-  const castVote = async (voteItemId: number, tokenBalance: number | null) => {
+  const castVote = async (voteItemId: number, tokenBalance: number | null, voteFor: boolean) => {
     const sqrtTokens = Math.sqrt(tokenBalance ?? 0);
-    const sendVoteFunctionABI = wagmigotchiABI;
-    useContractWrite({
-      address: "blah",
-      abi: sendVoteFunctionABI,
-      functionName: "vote",
-      onSuccess() {
-        console.log("Successfully cast vote");
-      },
-      args: [voteItemId, sqrtTokens],
-    });
+    await castVoteContract({ args: [voteItemId, voteFor ? 1 : 0] });
+
+    setLiveVotes(prevLiveVotes =>
+      prevLiveVotes.map(vote => (vote.id === voteItemId ? { ...vote, voted: voteFor } : vote)),
+    );
   };
 
   return (
     <div className="flex items-center flex-col flex-grow pt-10">
       <div className="px-5">
         <div className="flex justify-center items-center space-x-2">
-          <p className="my-2 font-medium">Connected Address:</p>
-          <Address address={connectedAddress} />
+          <p className="my-2 font-medium">{ensName ? "ENS Name:" : "Connected Address:"}</p>
+          {ensName ? <p className="text-blue-500">{ensName}</p> : <Address address={connectedAddress} />}
         </div>
 
         <div className="flex justify-center items-center space-x-2">
-          {eyeballScanned || isVerified || (
+          {isVerified || (
             <IDKitWidget
               app_id="app_staging_1b0aee8169e8e96effda6718b3d14c65"
               action="register-ens"
@@ -142,17 +172,19 @@ const Home: NextPage = () => {
             </IDKitWidget>
           )}
           <div className="flex justify-center items-center space-x-2">
-            {!eyeballScanned || (
+            {!isVerified || (
               <AwesomeButton type="primary" onPress={onVotePress}>
                 Vote with your verified ENS
               </AwesomeButton>
             )}
           </div>
-          <div className="flex justify-center items-center space-x-2">
-            <AwesomeButton type="primary" onPress={openRegistry}>
-              View verified ENS registry
-            </AwesomeButton>
-          </div>
+          {!showRegistry || (
+            <div className="flex justify-center items-center space-x-2">
+              <AwesomeButton type="primary" onPress={openRegistry}>
+                View verified ENS registry
+              </AwesomeButton>
+            </div>
+          )}
         </div>
       </div>
       <div className="flex justify-center items-center space-x-2">
@@ -296,19 +328,33 @@ const Home: NextPage = () => {
                   >
                     <span style={{ marginRight: "auto" }}>{voteItem.description}</span>
                     <button
-                      onClick={() => castVote(voteItem.id, balance)}
+                      onClick={() => castVote(voteItem.id, balance, true)} // Passing true for voting for the proposal
                       style={{
                         marginRight: "10px",
                         padding: "10px 20px",
-                        border: "1px solid #007bff",
-                        background: "#007bff",
+                        border: "1px solid #28a745",
+                        background: "#28a745",
                         color: "white",
                         borderRadius: "5px",
                         cursor: "pointer",
                         fontSize: "16px",
                       }}
                     >
-                      Vote
+                      For
+                    </button>
+                    <button
+                      onClick={() => castVote(voteItem.id, balance, false)} // Passing false for voting against the proposal
+                      style={{
+                        padding: "10px 20px",
+                        border: "1px solid #dc3545",
+                        background: "#dc3545",
+                        color: "white",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        fontSize: "16px",
+                      }}
+                    >
+                      Against
                     </button>
                   </div>
                 </li>
