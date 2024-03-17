@@ -481,103 +481,14 @@
           "internalType": "enum GovernorEvents.VoteSupport",
           "name": "support",
           "type": "uint8"
+        },
+        {
+          "internalType": "uint96",
+          "name": "votesSqrt",
+          "type": "uint96"
         }
       ],
       "name": "castVote",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "proposalId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "enum GovernorEvents.VoteSupport",
-          "name": "support",
-          "type": "uint8"
-        },
-        {
-          "internalType": "uint8",
-          "name": "v",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "r",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "s",
-          "type": "bytes32"
-        }
-      ],
-      "name": "castVoteBySig",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "proposalId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "enum GovernorEvents.VoteSupport",
-          "name": "support",
-          "type": "uint8"
-        },
-        {
-          "internalType": "string",
-          "name": "reason",
-          "type": "string"
-        }
-      ],
-      "name": "castVoteWithReason",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "proposalId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "enum GovernorEvents.VoteSupport",
-          "name": "support",
-          "type": "uint8"
-        },
-        {
-          "internalType": "string",
-          "name": "reason",
-          "type": "string"
-        },
-        {
-          "internalType": "uint8",
-          "name": "v",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "r",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "s",
-          "type": "bytes32"
-        }
-      ],
-      "name": "castVoteWithReasonBySig",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

@@ -37,6 +37,31 @@
       "type": "error"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "ensNode",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "ensName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "EnsNodeRegistered",
+      "type": "event"
+    },
+    {
       "inputs": [],
       "name": "ADDR_REVERSE_NODE",
       "outputs": [
@@ -122,9 +147,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "ensNode",
-          "type": "bytes32"
+          "internalType": "string",
+          "name": "ensName",
+          "type": "string"
         },
         {
           "internalType": "uint256",
