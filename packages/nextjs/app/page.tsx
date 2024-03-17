@@ -43,16 +43,9 @@ function sqrtBigInt(value) {
   return newtonIteration(value, value / 2n);
 }
 
-const toHumanReadableNumber = weiAmount => {
-  const etherAmount = BigInt(weiAmount) / BigInt(1e18); // Convert from wei to ether
-  const num = Number(etherAmount); // Only use Number() if the value is within JavaScript's safe range
-
-  if (num >= 1e15) return (num / 1e15).toFixed(2) + "Q";
-  if (num >= 1e12) return (num / 1e12).toFixed(2) + "T";
-  if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
-  if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
-  if (num >= 1e3) return (num / 1e3).toFixed(2) + "K";
-  return etherAmount.toString(); // Display the full number if less than 1000
+const weiToEtherBigInt = weiBigInt => {
+  const WEI_PER_ETHER = BigInt("100000000000000000");
+  return weiBigInt / WEI_PER_ETHER;
 };
 
 const Home: NextPage = () => {
@@ -62,7 +55,7 @@ const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
   const [ensName, setEnsName] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-  const [votingPower, setVotingPower] = useState(0);
+  const [votingPower, setVotingPower] = useState<BigInt>(0n);
   const checkSumAddress = connectedAddress ? getAddress(connectedAddress) : undefined;
   const { data: fetchedEns } = useEnsName({
     address: checkSumAddress,
@@ -93,11 +86,8 @@ const Home: NextPage = () => {
     functionName: "getCurrentVotes",
     args: [connectedAddress],
     onSuccess(data) {
-      const sqrtVotingPowerWei = sqrtBigInt(BigInt(data.toString()));
-      // Now we convert the square root of voting power in `wei` to the voting power in `ether` (with 18 decimal places)
-      // And then, use `toHumanReadableNumber` to convert to human-readable string
-      const readableVotingPower = toHumanReadableNumber(sqrtVotingPowerWei * BigInt(1e18)); // Adjust for 18 decimals to maintain precision
-      setVotingPower(readableVotingPower);
+      const sqrtVotingPowerWei = sqrtBigInt(BigInt(data.toString()) * BigInt(10 ** 18));
+      setVotingPower(sqrtVotingPowerWei);
     },
   });
 
@@ -187,7 +177,7 @@ const Home: NextPage = () => {
 
   const castVote = async (voteItemId: number, tokenBalance: number | null, voteFor: boolean) => {
     const sqrtTokens = Math.sqrt(tokenBalance ?? 0);
-    await castVoteContract({ args: [voteItemId, voteFor ? 1 : 0] });
+    await castVoteContract({ args: [voteItemId, voteFor ? 1 : 0, votingPower] });
 
     setLiveVotes(prevLiveVotes =>
       prevLiveVotes.map(vote => (vote.id === voteItemId ? { ...vote, voted: voteFor } : vote)),
@@ -203,7 +193,7 @@ const Home: NextPage = () => {
         </div>
         <div className="flex justify-center items-center space-x-2">
           <p className="my-2 font-medium">Voting Power:</p>
-          <p className="text-blue-500">{votingPower}</p>
+          <p className="text-blue-500">{String(weiToEtherBigInt(votingPower))}</p>
         </div>
 
         <div className="flex justify-center items-center space-x-2">
