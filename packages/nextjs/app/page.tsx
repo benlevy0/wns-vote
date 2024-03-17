@@ -12,6 +12,7 @@ import { useAccount, useEnsName, usePublicClient } from "wagmi";
 import { useContractRead, useContractWrite } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { abi as registryAbi } from "~~/components/abis/ENSWorldIdRegistry.json";
+import { abi as tokenAbi } from "~~/components/abis/GovernanceToken.json";
 import { abi as governorAbi } from "~~/components/abis/Governor.json";
 import { Address } from "~~/components/scaffold-eth";
 import { useAccountBalance } from "~~/hooks/scaffold-eth/";
@@ -22,6 +23,38 @@ interface Proposal {
   voted: null | boolean;
 }
 
+function sqrtBigInt(value) {
+  if (value < 0n) {
+    throw "Square root of negative numbers is not supported";
+  }
+
+  if (value < 2n) {
+    return value;
+  }
+
+  function newtonIteration(n, x0) {
+    const x1 = (n / x0 + x0) >> 1n;
+    if (x0 === x1 || x0 === x1 - 1n) {
+      return x0;
+    }
+    return newtonIteration(n, x1);
+  }
+
+  return newtonIteration(value, value / 2n);
+}
+
+const toHumanReadableNumber = weiAmount => {
+  const etherAmount = BigInt(weiAmount) / BigInt(1e18); // Convert from wei to ether
+  const num = Number(etherAmount); // Only use Number() if the value is within JavaScript's safe range
+
+  if (num >= 1e15) return (num / 1e15).toFixed(2) + "Q";
+  if (num >= 1e12) return (num / 1e12).toFixed(2) + "T";
+  if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
+  if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
+  if (num >= 1e3) return (num / 1e3).toFixed(2) + "K";
+  return etherAmount.toString(); // Display the full number if less than 1000
+};
+
 const Home: NextPage = () => {
   const showRegistry = false;
   const [isRegistryModalOpen, setRegistryModalOpen] = useState(false);
@@ -29,6 +62,7 @@ const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
   const [ensName, setEnsName] = useState("");
   const [isVerified, setIsVerified] = useState(false);
+  const [votingPower, setVotingPower] = useState(0);
   const checkSumAddress = connectedAddress ? getAddress(connectedAddress) : undefined;
   const { data: fetchedEns } = useEnsName({
     address: checkSumAddress,
@@ -50,6 +84,20 @@ const Home: NextPage = () => {
     args: [namehash(ensName)],
     onSuccess(data) {
       setIsVerified(Boolean(data));
+    },
+  });
+
+  useContractRead({
+    address: TOKEN_ADDRESS,
+    abi: tokenAbi,
+    functionName: "getCurrentVotes",
+    args: [connectedAddress],
+    onSuccess(data) {
+      const sqrtVotingPowerWei = sqrtBigInt(BigInt(data.toString()));
+      // Now we convert the square root of voting power in `wei` to the voting power in `ether` (with 18 decimal places)
+      // And then, use `toHumanReadableNumber` to convert to human-readable string
+      const readableVotingPower = toHumanReadableNumber(sqrtVotingPowerWei * BigInt(1e18)); // Adjust for 18 decimals to maintain precision
+      setVotingPower(readableVotingPower);
     },
   });
 
@@ -152,6 +200,10 @@ const Home: NextPage = () => {
         <div className="flex justify-center items-center space-x-2">
           <p className="my-2 font-medium">{ensName ? "ENS Name:" : "Connected Address:"}</p>
           {ensName ? <p className="text-blue-500">{ensName}</p> : <Address address={connectedAddress} />}
+        </div>
+        <div className="flex justify-center items-center space-x-2">
+          <p className="my-2 font-medium">Voting Power:</p>
+          <p className="text-blue-500">{votingPower}</p>
         </div>
 
         <div className="flex justify-center items-center space-x-2">
